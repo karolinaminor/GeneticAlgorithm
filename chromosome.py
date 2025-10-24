@@ -1,3 +1,6 @@
+import inspect
+
+
 class Chromosome:
     """Binary representation of a chromosome"""
 
@@ -28,3 +31,12 @@ class Chromosome:
             real_value = round(real_value, self.precision)
             decoded_values.append(real_value)
         return decoded_values
+
+    def evaluate_fitness(self, func=None):
+        if func is None:
+            raise ValueError("A fitness function must be provided to evaluate the chromosome.")
+
+        decoded = self.decode()
+        self.fitness = func(decoded)
+        return self.fitness
+

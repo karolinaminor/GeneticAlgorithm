@@ -1,21 +1,19 @@
 from genetic_algorithm import GeneticAlgorithm
+import benchmark_functions as bf
 
 if __name__ == "__main__":
     # test
     config = {
-        'population_size': 4,
+        'population_size': 10,
         'n_variables': 2,
-        'bounds': [(0, 10), (0, 5)],
+        'bounds': [(-3, 4), (-3, 4)],
         'precision': 3,
-        'p_mutation': 0.1,
-        'p_inversion': 0.2
+        'p_mutation': 0.09,
+        'p_inversion': 0.09,
+        'elite_p': 0.15,
+        'optimization': 'min'
     }
 
-    ga = GeneticAlgorithm(config)
+    ga = GeneticAlgorithm(config, bf.McCormick())
 
-    population = ga.initialize_population()
-    print("Populacja początkowa:")
-    for i, chrom in enumerate(population):
-        print(f"  Chromosom {i+1}: {chrom.genes}")
-
-    ga.run(epochs=3)
+    ga.run(epochs=125)
