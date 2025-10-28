@@ -11,6 +11,8 @@ if __name__ == "__main__":
         'p_mutation': 0.09,
         'p_inversion': 0.09,
         'elite_p': 0.15,
+        'crossover_method': 'two_point',
+        'mutation_method': 'one_point',
         'optimization': 'min'
     }
 

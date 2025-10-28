@@ -1,5 +1,3 @@
-import inspect
-
 
 class Chromosome:
     """Binary representation of a chromosome"""

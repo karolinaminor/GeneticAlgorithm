@@ -1,6 +1,9 @@
 import numpy as np
+import random
 from chromosome import Chromosome
-import functions
+from crossover_methods import CrossoverMethods
+from mutation_methods import MutationMethods
+from inversion_methods import InversionMethods
 
 
 class GeneticAlgorithm:
@@ -52,17 +55,29 @@ class GeneticAlgorithm:
             new_population.extend(elite)
 
             while len(new_population) < len(self.population):
+                parent1 = random.choice(self.population)
+                parent2 = random.choice(self.population)
+                while parent1 == parent2:
+                    parent2 = random.choice(self.population)
 
-                parent = __import__('random').choice(self.population)
-                child = self.mutation(parent)
-                child = self.inversion(child, self.config['p_inversion'])
-                child.evaluate_fitness(self.fitness_function)
+                child1, child2 = self.crossover(parent1, parent2)
 
-                new_population.append(child)
+                child1 = self.mutation(child1)
+                child1 = self.inversion(child1)
+                child1.evaluate_fitness(self.fitness_function)
+
+                if len(new_population) < len(self.population):
+                    new_population.append(child1)
+
+                if len(new_population) < len(self.population):
+                    child2 = self.mutation(child2)
+                    child2 = self.inversion(child2)
+                    child2.evaluate_fitness(self.fitness_function)
+                    new_population.append(child2)
 
             self.population = new_population
 
-            print("Populacja after elitism strategy, mutatnion and inversion:")
+            print("Populacja po krzyżowaniu, mutacji i inwersji:")
             for i, c in enumerate(self.population):
                 print(f"  Chromosom {i + 1}: {c.genes}, Fitness: {c.fitness}")
                 print(f"Values: {c.decode()}")
@@ -81,7 +96,7 @@ class GeneticAlgorithm:
         for i in range(n_variables):
             bound = bounds[i]
             m = self._calculate_gene_length(bound, precision)
-            gene = ''.join(['1' if __import__('random').random()
+            gene = ''.join(['1' if random.random()
                                    > 0.5 else '0' for _ in range(m)])
             genes.append(gene)
         return Chromosome(genes, bounds, precision)
@@ -130,45 +145,66 @@ class GeneticAlgorithm:
         if config['optimization'] not in ('min', 'max'):
             raise ValueError("'optimization' must be either 'min' or 'max'")
 
+    def _crossover(self, parent1: Chromosome, parent2: Chromosome):
+            """Perform crossover between two parent chromosomes."""
+            method = self.config.get('crossover_method', 'one_point')
 
+            offspring1_genes = []
+            offspring2_genes = []
 
-    def mutation(self, chromosome: Chromosome) -> Chromosome:
-            """ chromosome mutation """
+            for g1, g2 in zip(parent1.genes, parent2.genes):
+                if method == 'one_point':
+                    o1, o2 = CrossoverMethods.one_point_crossover(g1, g2)
+                elif method == 'two_point':
+                    o1, o2 = CrossoverMethods.two_point_crossover(g1, g2)
+                elif method == 'uniform':
+                    o1, o2 = CrossoverMethods.uniform_crossover(g1, g2)
+                elif method == 'discrete':
+                    o1 = CrossoverMethods.discrete_crossover(g1, g2)
+                    o2 = CrossoverMethods.discrete_crossover(g2, g1)
+                else:
+                    raise ValueError(f"Unknown crossover method: {method}")
 
-            p_mutation = self.config['p_mutation']
+                offspring1_genes.append(o1)
+                offspring2_genes.append(o2)
 
-            new_genes = []
-            for gene in chromosome.genes:
-                new_gene = ''
-                for bit in gene:
-                    if __import__('random').random() < p_mutation:
-                        new_gene += '0' if bit == '1' else '1'
-                    else:
-                        new_gene += bit
-                new_genes.append(new_gene)
+            return (
+                Chromosome(offspring1_genes, parent1.bounds, parent1.precision),
+                Chromosome(offspring2_genes, parent1.bounds, parent1.precision)
+            )
 
-            return Chromosome(new_genes, chromosome.bounds, chromosome.precision)
+    def _mutation(self, chromosome: Chromosome) -> Chromosome:
+        """Use selected mutation method to on chromosome."""
+        method = self.config.get('mutation_method', 'one_point')
+        p_mutation = self.config.get('p_mutation', 0.05)
 
-    def inversion(self, chromosome: Chromosome, p_inversion: float) -> Chromosome:
-            """ chromosome inversion """
+        if method == 'one_point':
+            new_genes = MutationMethods.one_point_mutation(chromosome.genes, p_mutation)
+        elif method == 'two_point':
+            new_genes = MutationMethods.two_point_mutation(chromosome.genes)
+        elif method == 'boundary':
+            new_genes = MutationMethods.boundary_mutation(chromosome.genes)
+        else:
+            raise ValueError(f"Unknown mutation method: {method}")
 
-            if __import__('random').random() < p_inversion:
-                full_gene = ''.join(chromosome.genes)
-                i, j = sorted(__import__('random').sample(range(len(full_gene)), 2))
-                inverted = full_gene[:i] + full_gene[i:j + 1][::-1] + full_gene[j + 1:]
+        return Chromosome(new_genes, chromosome.bounds, chromosome.precision)
 
-                new_genes = []
-                index = 0
+    def _inversion(self, chromosome: Chromosome) -> Chromosome:
+        """Apply selected inversion method to a chromosome."""
+        method = self.config.get('inversion_method', 'two_point')
+        p_inversion = self.config.get('p_inversion', 0.05)
 
-                for g in chromosome.genes:
-                    length = len(g)
-                    new_genes.append(inverted[index:index + length])
-                    index += length
-
-                return Chromosome(new_genes, chromosome.bounds, chromosome.precision)
+        if random.random() >= p_inversion:
             return chromosome
 
-    def get_elite(self, population: list) -> list:
+        if method == 'two_point':
+            new_genes = InversionMethods.two_point_inversion(chromosome.genes)
+        else:
+            raise ValueError(f"Unknown inversion method: {method}")
+
+        return Chromosome(new_genes, chromosome.bounds, chromosome.precision)
+
+    def _get_elite(self, population: list) -> list:
         """
         Returns:
             list: Elite individuals to be carried over to the next generation
