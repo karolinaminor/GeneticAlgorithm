@@ -207,7 +207,7 @@ class GeneticAlgorithmGUI(tk.Tk):
 
             # --- 3. Run the Genetic Algorithm ---
             self.status_label.config(
-                text=f"Running GA with {func_name} for {epochs} epochs..."
+                text=f"Running GA with {func_name} for {epochs} epochs...\n\n\n"
             )
             self.update_idletasks() # Force GUI to update
 
@@ -222,12 +222,13 @@ class GeneticAlgorithmGUI(tk.Tk):
             ga = GeneticAlgorithm(config, benchmark_func_class())
 
             # Run the GA
-            ga.run(epochs=epochs)
+            winner = ga.run(epochs=epochs)
             
             print("--- GA Run Finished ---")
             
             self.status_label.config(
-                text="Run finished! Check console for results."
+                #text="Run finished! Check console for results."
+                text=f"Run finished!\nBest solution: {winner.decode()}\nFitness: {winner.fitness:.2f}"
             )
 
         except ValueError as e:

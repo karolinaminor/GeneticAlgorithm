@@ -34,7 +34,7 @@ class GeneticAlgorithm:
         self.population = population
         return population
 
-    def run(self, epochs: int):
+    def run(self, epochs: int) -> Chromosome:
         """Run the genetic algorithm - test """
 
         self.initialize_population()
@@ -79,8 +79,18 @@ class GeneticAlgorithm:
             for i, c in enumerate(self.population):
                 print(f"  Chromosom {i + 1}: {c.genes}, Fitness: {c.fitness}")
                 print(f"Values: {c.decode()}")
+            
+            best_solution = self._get_best_solution()
+            print(f"\nNajlepsze rozwiązanie w epoce {epoch + 1}:")
+            print(f"  Chromosom: {best_solution.genes}, Fitness: {best_solution.fitness}")
+            print(f"  Values: {best_solution.decode()}")
+
+        print("\n=== NAJLEPSZE ROZWIĄZANIE PO WSZYSTKICH EPOKACH ===")
+        print(f"  Chromosom: {best_solution.genes}, Fitness: {best_solution.fitness}")
+        print(f"  Values: {best_solution.decode()}")
 
         print("\n=== KONIEC DZIAŁANIA ALGORYTMU ===")
+        return best_solution
 
     def _calculate_gene_length(self, bound, precision):
         """Calculate the length of the gene for a given variable based on bounds and precision"""
