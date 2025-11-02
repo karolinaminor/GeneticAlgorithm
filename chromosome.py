@@ -6,11 +6,13 @@ class Chromosome:
         if not isinstance(genes, list) or not all(isinstance(g, str) for g in genes):
             raise ValueError("Genes must be a list of binary strings.")
         if not isinstance(bounds, list) or not all(isinstance(b, tuple) and len(b) == 2 for b in bounds):
-            raise ValueError("Bounds must be a list of tuples with two numeric values.")
+            raise ValueError(
+                "Bounds must be a list of tuples with two numeric values.")
         if not isinstance(precision, int) or precision < 0:
             raise ValueError("Precision must be a non-negative integer.")
         if len(genes) != len(bounds):
-            raise ValueError("The number of genes must match the number of bounds.")
+            raise ValueError(
+                "The number of genes must match the number of bounds.")
 
         self.genes = genes
         self.bounds = bounds
@@ -31,10 +33,11 @@ class Chromosome:
         return decoded_values
 
     def evaluate_fitness(self, func=None):
+        """Evaluate the fitness of the chromosome using the provided function."""
         if func is None:
-            raise ValueError("A fitness function must be provided to evaluate the chromosome.")
+            raise ValueError(
+                "A fitness function must be provided to evaluate the chromosome.")
 
         decoded = self.decode()
         self.fitness = func(decoded)
         return self.fitness
-

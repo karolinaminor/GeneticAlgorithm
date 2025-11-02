@@ -1,5 +1,5 @@
-import numpy as np
 import random
+import numpy as np
 from chromosome import Chromosome
 from crossover_methods import CrossoverMethods
 from mutation_methods import MutationMethods
@@ -16,8 +16,6 @@ class GeneticAlgorithm:
         self.config = config
         self.fitness_function = fitness_function
         self.population = None
-
-
 
     def initialize_population(self) -> list:
         """Initialize population with random binary chromosomes"""
@@ -51,7 +49,7 @@ class GeneticAlgorithm:
 
             new_population = []
 
-            elite = self.get_elite(self.population)
+            elite = self._get_elite(self.population)
             new_population.extend(elite)
 
             while len(new_population) < len(self.population):
@@ -60,18 +58,18 @@ class GeneticAlgorithm:
                 while parent1 == parent2:
                     parent2 = random.choice(self.population)
 
-                child1, child2 = self.crossover(parent1, parent2)
+                child1, child2 = self._crossover(parent1, parent2)
 
-                child1 = self.mutation(child1)
-                child1 = self.inversion(child1)
+                child1 = self._mutation(child1)
+                child1 = self._inversion(child1)
                 child1.evaluate_fitness(self.fitness_function)
 
                 if len(new_population) < len(self.population):
                     new_population.append(child1)
 
                 if len(new_population) < len(self.population):
-                    child2 = self.mutation(child2)
-                    child2 = self.inversion(child2)
+                    child2 = self._mutation(child2)
+                    child2 = self._inversion(child2)
                     child2.evaluate_fitness(self.fitness_function)
                     new_population.append(child2)
 
@@ -146,32 +144,32 @@ class GeneticAlgorithm:
             raise ValueError("'optimization' must be either 'min' or 'max'")
 
     def _crossover(self, parent1: Chromosome, parent2: Chromosome):
-            """Perform crossover between two parent chromosomes."""
-            method = self.config.get('crossover_method', 'one_point')
+        """Perform crossover between two parent chromosomes."""
+        method = self.config.get('crossover_method', 'one_point')
 
-            offspring1_genes = []
-            offspring2_genes = []
+        offspring1_genes = []
+        offspring2_genes = []
 
-            for g1, g2 in zip(parent1.genes, parent2.genes):
-                if method == 'one_point':
-                    o1, o2 = CrossoverMethods.one_point_crossover(g1, g2)
-                elif method == 'two_point':
-                    o1, o2 = CrossoverMethods.two_point_crossover(g1, g2)
-                elif method == 'uniform':
-                    o1, o2 = CrossoverMethods.uniform_crossover(g1, g2)
-                elif method == 'discrete':
-                    o1 = CrossoverMethods.discrete_crossover(g1, g2)
-                    o2 = CrossoverMethods.discrete_crossover(g2, g1)
-                else:
-                    raise ValueError(f"Unknown crossover method: {method}")
+        for g1, g2 in zip(parent1.genes, parent2.genes):
+            if method == 'one_point':
+                o1, o2 = CrossoverMethods.one_point_crossover(g1, g2)
+            elif method == 'two_point':
+                o1, o2 = CrossoverMethods.two_point_crossover(g1, g2)
+            elif method == 'uniform':
+                o1, o2 = CrossoverMethods.uniform_crossover(g1, g2)
+            elif method == 'discrete':
+                o1 = CrossoverMethods.discrete_crossover(g1, g2)
+                o2 = CrossoverMethods.discrete_crossover(g2, g1)
+            else:
+                raise ValueError(f"Unknown crossover method: {method}")
 
-                offspring1_genes.append(o1)
-                offspring2_genes.append(o2)
+            offspring1_genes.append(o1)
+            offspring2_genes.append(o2)
 
-            return (
-                Chromosome(offspring1_genes, parent1.bounds, parent1.precision),
-                Chromosome(offspring2_genes, parent1.bounds, parent1.precision)
-            )
+        return (
+            Chromosome(offspring1_genes, parent1.bounds, parent1.precision),
+            Chromosome(offspring2_genes, parent1.bounds, parent1.precision)
+        )
 
     def _mutation(self, chromosome: Chromosome) -> Chromosome:
         """Use selected mutation method to on chromosome."""
