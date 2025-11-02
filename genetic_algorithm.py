@@ -34,13 +34,15 @@ class GeneticAlgorithm:
         self.population = population
         return population
 
-    def run(self, epochs: int) -> Chromosome:
+    def run(self, epochs: int) -> tuple:
         """Run the genetic algorithm - test """
 
         self.initialize_population()
 
         for chrom in self.population:
             chrom.evaluate_fitness(self.fitness_function)
+
+        history = []
 
         print("=== START GENETIC ALGORITHM ===")
 
@@ -81,6 +83,16 @@ class GeneticAlgorithm:
                 print(f"Values: {c.decode()}")
             
             best_solution = self._get_best_solution()
+            avg_fitness, max_fitness, min_fitness, std_fitness = self._calculate_stats()
+            history.append({
+                'epoch': epoch + 1,
+                'best_solution': best_solution,
+                'average_fitness': avg_fitness,
+                'max_fitness': max_fitness,
+                'min_fitness': min_fitness,
+                'std_fitness': std_fitness
+            })
+
             print(f"\nNajlepsze rozwiązanie w epoce {epoch + 1}:")
             print(f"  Chromosom: {best_solution.genes}, Fitness: {best_solution.fitness}")
             print(f"  Values: {best_solution.decode()}")
@@ -90,7 +102,7 @@ class GeneticAlgorithm:
         print(f"  Values: {best_solution.decode()}")
 
         print("\n=== KONIEC DZIAŁANIA ALGORYTMU ===")
-        return best_solution
+        return best_solution, history
 
     def _calculate_gene_length(self, bound, precision):
         """Calculate the length of the gene for a given variable based on bounds and precision"""
@@ -234,3 +246,18 @@ class GeneticAlgorithm:
         best_chromosome = max(self.population, key=lambda c: c.fitness) if reverse else min(self.population, key=lambda c: c.fitness)
 
         return best_chromosome
+    
+    def _calculate_stats(self) -> dict:
+        """Calculate statistics of the current population."""
+        fitness_values = [chrom.fitness for chrom in self.population]
+        avg_fitness = sum(fitness_values) / len(fitness_values)
+        max_fitness = max(fitness_values)
+        min_fitness = min(fitness_values)
+        std_fitness = np.std(fitness_values)
+
+        return {
+            'average_fitness': avg_fitness,
+            'max_fitness': max_fitness,
+            'min_fitness': min_fitness,
+            'std_fitness': std_fitness
+        }
