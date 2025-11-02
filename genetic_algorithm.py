@@ -214,3 +214,13 @@ class GeneticAlgorithm:
         sorted_population = sorted(population, key=lambda c: c.fitness, reverse=reverse)
 
         return sorted_population[:n_elite]
+    
+    def _get_best_solution(self) -> Chromosome:
+        """Return the best solution in the current population."""
+        if not self.population:
+            raise ValueError("Population is not initialized.")
+
+        reverse = True if self.config.get('optimization', 'max') == 'max' else False
+        best_chromosome = max(self.population, key=lambda c: c.fitness) if reverse else min(self.population, key=lambda c: c.fitness)
+
+        return best_chromosome
