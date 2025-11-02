@@ -83,14 +83,15 @@ class GeneticAlgorithm:
                 print(f"Values: {c.decode()}")
             
             best_solution = self._get_best_solution()
-            avg_fitness, max_fitness, min_fitness, std_fitness = self._calculate_stats()
+            stats = self._calculate_stats()
             history.append({
                 'epoch': epoch + 1,
                 'best_solution': best_solution,
-                'average_fitness': avg_fitness,
-                'max_fitness': max_fitness,
-                'min_fitness': min_fitness,
-                'std_fitness': std_fitness
+                'best_fitness': best_solution.fitness,
+                'average_fitness': stats['average_fitness'],
+                'max_fitness': stats['max_fitness'],
+                'min_fitness': stats['min_fitness'],
+                'std_fitness': stats['std_fitness']
             })
 
             print(f"\nNajlepsze rozwiązanie w epoce {epoch + 1}:")
