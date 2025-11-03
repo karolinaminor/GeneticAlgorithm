@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+import sqlite3
 
 # --- Import your code ---
 # Make sure genetic_algorithm.py and benchmark_functions.py
@@ -16,6 +17,7 @@ except ImportError:
     )
     exit()
 
+
 class GeneticAlgorithmGUI(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -30,9 +32,9 @@ class GeneticAlgorithmGUI(tk.Tk):
         # The value is the actual class or function from your module.
         self.benchmark_functions = {
             "McCormick": bf.McCormick,
-            #"Ackley": bf.Ackley,       # Example: assuming you have this
-            #"Rastrigin": bf.Rastrigin, # Example: assuming you have this
-            #"Sphere": bf.Sphere        # Example: assuming you have this
+            # "Ackley": bf.Ackley,       # Example: assuming you have this
+            # "Rastrigin": bf.Rastrigin, # Example: assuming you have this
+            # "Sphere": bf.Sphere        # Example: assuming you have this
             # Add more functions here as 'Name': bf.FunctionName
         }
 
@@ -58,13 +60,13 @@ class GeneticAlgorithmGUI(tk.Tk):
             main_frame, "Epochs:", 125, row_index
         )
         row_index += 1
-        
+
         # --- Config Parameters ---
         self.widgets['population_size'] = self._create_entry(
             main_frame, "Population Size:", 10, row_index
         )
         row_index += 1
-        
+
         self.widgets['n_variables'] = self._create_entry(
             main_frame, "Number of Variables:", 2, row_index
         )
@@ -79,12 +81,12 @@ class GeneticAlgorithmGUI(tk.Tk):
             main_frame, "Max Bound (for all):", 4, row_index
         )
         row_index += 1
-        
+
         self.widgets['precision'] = self._create_entry(
             main_frame, "Precision:", 3, row_index
         )
         row_index += 1
-        
+
         self.widgets['p_mutation'] = self._create_entry(
             main_frame, "P(mutation):", 0.09, row_index
         )
@@ -94,7 +96,7 @@ class GeneticAlgorithmGUI(tk.Tk):
             main_frame, "P(inversion):", 0.09, row_index
         )
         row_index += 1
-        
+
         self.widgets['elite_p'] = self._create_entry(
             main_frame, "Elite Percentage:", 0.15, row_index
         )
@@ -162,18 +164,45 @@ class GeneticAlgorithmGUI(tk.Tk):
         combo.grid(row=row, column=1, sticky="ew", padx=5, pady=2)
         return combo
 
+    def _init_db(self):
+        """Create database file and table if not exists."""
+        conn = sqlite3.connect("results.db")
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS ga_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                function_name TEXT,
+                epoch INTEGER,
+                best_fitness REAL,
+                best_solution TEXT
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+    def _save_result(self, function_name, epoch, best_fitness, best_solution):
+        """Save one iteration's result to the database."""
+        conn = sqlite3.connect("results.db")
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO ga_results (function_name, epoch, best_fitness, best_solution) VALUES (?, ?, ?, ?)",
+            (function_name, epoch, best_fitness, str(best_solution))
+        )
+        conn.commit()
+        conn.close()
+
     def run_ga(self):
         """Gathers data from the GUI, builds config, and runs the GA."""
         try:
             # --- 1. Gather all values from GUI ---
-            
+
             # Get benchmark function class
             func_name = self.widgets['benchmark'].get()
             benchmark_func_class = self.benchmark_functions[func_name]
-            
+
             # Get main run parameter
             epochs = int(self.widgets['epochs'].get())
-            
+
             # Get config parameters
             pop_size = int(self.widgets['population_size'].get())
             n_vars = int(self.widgets['n_variables'].get())
@@ -181,12 +210,12 @@ class GeneticAlgorithmGUI(tk.Tk):
             p_mut = float(self.widgets['p_mutation'].get())
             p_inv = float(self.widgets['p_inversion'].get())
             elite_p = float(self.widgets['elite_p'].get())
-            
+
             # Build the bounds list dynamically
             min_b = float(self.widgets['bound_min'].get())
             max_b = float(self.widgets['bound_max'].get())
-            bounds = [(min_b, max_b)] * n_vars # e.g., [(-3, 4), (-3, 4)]
-            
+            bounds = [(min_b, max_b)] * n_vars  # e.g., [(-3, 4), (-3, 4)]
+
             crossover = self.widgets['crossover_method'].get()
             mutation = self.widgets['mutation_method'].get()
             optimization = self.widgets['optimization'].get()
@@ -209,25 +238,37 @@ class GeneticAlgorithmGUI(tk.Tk):
             self.status_label.config(
                 text=f"Running GA with {func_name} for {epochs} epochs...\n\n\n"
             )
-            self.update_idletasks() # Force GUI to update
+            self.update_idletasks()  # Force GUI to update
 
-            print("="*30)
+            print("=" * 30)
             print(f"Starting GA Run: {func_name}")
             print(f"Config: {config}")
             print(f"Epochs: {epochs}")
-            print("="*30)
+            print("=" * 30)
 
             # Instantiate the GA
             # We instantiate the benchmark function: bf.McCormick()
             ga = GeneticAlgorithm(config, benchmark_func_class())
 
             # Run the GA
-            winner = ga.run(epochs=epochs)
-            
+            winner, history = ga.run(epochs=epochs)
+
+            # Initialize database
+            self._init_db()
+
+            # Save results from each epoch to database
+            for record in history:
+                self._save_result(
+                    func_name,
+                    record['epoch'],
+                    record['best_solution'].fitness,
+                    record['best_solution'].decode()
+                )
+
             print("--- GA Run Finished ---")
-            
+
             self.status_label.config(
-                #text="Run finished! Check console for results."
+                # text="Run finished! Check console for results."
                 text=f"Run finished!\nBest solution: {winner.decode()}\nFitness: {winner.fitness:.2f}"
             )
 
@@ -239,6 +280,7 @@ class GeneticAlgorithmGUI(tk.Tk):
             # Handle other errors (e.g., from your GA code)
             messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
             self.status_label.config(text=f"Error: {e}")
+
 
 if __name__ == "__main__":
     app = GeneticAlgorithmGUI()
