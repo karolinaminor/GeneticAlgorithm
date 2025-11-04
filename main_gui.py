@@ -30,6 +30,7 @@ except ImportError:
     )
     exit()
 
+
 class GeneticAlgorithmGUI(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -187,6 +188,33 @@ class GeneticAlgorithmGUI(tk.Tk):
         combo.grid(row=row, column=1, sticky="ew", padx=5, pady=3)
         return combo
 
+    def _init_db(self):
+        """Create database file and table if not exists."""
+        conn = sqlite3.connect("results.db")
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS ga_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                function_name TEXT,
+                epoch INTEGER,
+                best_fitness REAL,
+                best_solution TEXT
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+    def _save_result(self, function_name, epoch, best_fitness, best_solution):
+        """Save one iteration's result to the database."""
+        conn = sqlite3.connect("results.db")
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO ga_results (function_name, epoch, best_fitness, best_solution) VALUES (?, ?, ?, ?)",
+            (function_name, epoch, best_fitness, str(best_solution))
+        )
+        conn.commit()
+        conn.close()
+
     def run_ga(self):
         try:
             # Wyłącz przyciski na czas uruchomienia
@@ -227,11 +255,11 @@ class GeneticAlgorithmGUI(tk.Tk):
             )
             self.update_idletasks()
 
-            print("="*30)
+            print("=" * 30)
             print(f"Starting GA Run: {func_name}")
             print(f"Config: {config}")
             print(f"Epochs: {epochs}")
-            print("="*30)
+            print("=" * 30)
 
             ga = GeneticAlgorithm(config, benchmark_func_class())
 
