@@ -55,7 +55,7 @@ class AppController:
             messagebox.showerror("Invalid Input", f"Error: {e}\nPlease check all input fields.")
             self.view.on_run_error("Error: Invalid input.")
         except TypeError as e:
-             if "'NoneType' is not iterable" in str(e):
+            if "'NoneType' is not iterable" in str(e):
                 messagebox.showerror(
                     "GA Implementation Error", 
                     "The `ga.run()` method probably did not return a history.\n\n"
@@ -64,9 +64,10 @@ class AppController:
                     "Please update `genetic_algorithm.py`."
                 )
                 self.view.on_run_error("Error: `ga.run()` did not return history.")
-             else:
+            else:
                 messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
                 self.view.on_run_error(f"Error: {e}")
         except Exception as e:
             messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
             self.view.on_run_error(f"Error: {e}")
+            

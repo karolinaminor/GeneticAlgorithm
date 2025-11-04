@@ -53,7 +53,7 @@ class DatabaseManager:
         run_id = cursor.lastrowid
 
         if not history or not isinstance(history, list) or not isinstance(history[0], dict):
-             raise TypeError("History format is incorrect. Expected a list of dictionaries.")
+            raise TypeError("History format is incorrect. Expected a list of dictionaries.")
 
         results_data = [
             (run_id, h['epoch'], h['best_fitness'], h['average_fitness'], h['std_fitness'])
@@ -68,3 +68,4 @@ class DatabaseManager:
         conn.commit()
         conn.close()
         print(f"Results successfully saved to {self.db_file} (Run ID: {run_id})")
+        

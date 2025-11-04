@@ -50,3 +50,4 @@ def plot_avg_std_dev(history):
         plt.show()
     except Exception as e:
         messagebox.showerror("Plot Error", f"Could not generate plot: {e}")
+        
