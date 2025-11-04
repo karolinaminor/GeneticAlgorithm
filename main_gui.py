@@ -5,20 +5,8 @@ import sqlite3
 import json
 import datetime
 
-# --- Importy do wykresów ---
-# Upewnij się, że masz zainstalowaną bibliotekę matplotlib:
-# pip install matplotlib
-try:
-    import matplotlib.pyplot as plt
-except ImportError:
-    messagebox.showerror(
-        "Brak modułu",
-        "Nie znaleziono biblioteki 'matplotlib'.\n"
-        "Proszę zainstalować ją używając: pip install matplotlib"
-    )
-    exit()
+import matplotlib.pyplot as plt
 
-# --- Import Twojego kodu ---
 try:
     from genetic_algorithm import GeneticAlgorithm
     import benchmark_functions as bf
@@ -30,21 +18,17 @@ except ImportError:
     )
     exit()
 
-
 class GeneticAlgorithmGUI(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Genetic Algorithm Runner")
-        self.geometry("450x750") # Zwiększono wysokość okna
+        self.geometry("450x750")
 
-        # Przechowuje historię z ostatniego uruchomienia
+        # Stores the history from the last run
         self.last_run_history = None 
 
         self.benchmark_functions = {
             "McCormick": bf.McCormick,
-            # "Ackley": bf.Ackley, 
-            # "Rastrigin": bf.Rastrigin,
-            # "Sphere": bf.Sphere
         }
         
         self.widgets = {}
@@ -54,8 +38,8 @@ class GeneticAlgorithmGUI(tk.Tk):
 
         row_index = 0
 
-        # --- Sekcja parametrów ---
-        param_frame = ttk.LabelFrame(main_frame, text="Parametry", padding="10")
+        # parameters
+        param_frame = ttk.LabelFrame(main_frame, text="Parameters", padding="10")
         param_frame.grid(row=row_index, column=0, columnspan=2, sticky="ew")
         
         param_row = 0
@@ -135,7 +119,7 @@ class GeneticAlgorithmGUI(tk.Tk):
         param_frame.columnconfigure(1, weight=1)
         row_index += 1
 
-        # --- Sekcja uruchomienia ---
+        # run
         run_frame = ttk.Frame(main_frame, padding="5 0")
         run_frame.grid(row=row_index, column=0, columnspan=2, sticky="ew")
 
@@ -145,24 +129,24 @@ class GeneticAlgorithmGUI(tk.Tk):
         self.run_button.pack(fill=tk.X, expand=True)
         row_index += 1
         
-        # --- Sekcja wykresów (nowa) ---
-        plot_frame = ttk.LabelFrame(main_frame, text="Wyniki i Wykresy", padding="10")
+        # plots
+        plot_frame = ttk.LabelFrame(main_frame, text="Results and Plots", padding="10")
         plot_frame.grid(row=row_index, column=0, columnspan=2, sticky="ew", pady="10 0")
 
         self.plot_fitness_button = ttk.Button(
-            plot_frame, text="Wykres: Najlepsza Wartość Funkcji",
+            plot_frame, text="Plot: Best Fitness Value",
             command=self.plot_best_fitness, state=tk.DISABLED
         )
         self.plot_fitness_button.pack(fill=tk.X, expand=True, pady=2)
 
         self.plot_stats_button = ttk.Button(
-            plot_frame, text="Wykres: Średnia Wartość i Odch. Std.",
+            plot_frame, text="Plot: Average Value and Std. Dev.",
             command=self.plot_avg_std_dev, state=tk.DISABLED
         )
         self.plot_stats_button.pack(fill=tk.X, expand=True, pady=2)
         row_index += 1
 
-        # --- Status Label ---
+        # status
         self.status_label = ttk.Label(main_frame, text="Ready.", relief=tk.SUNKEN, anchor="nw", wraplength=430)#, height=4)
         self.status_label.grid(
             row=row_index, column=0, columnspan=2, sticky="ew", pady=5
@@ -217,13 +201,11 @@ class GeneticAlgorithmGUI(tk.Tk):
 
     def run_ga(self):
         try:
-            # Wyłącz przyciski na czas uruchomienia
             self.run_button.config(state=tk.DISABLED)
             self.plot_fitness_button.config(state=tk.DISABLED)
             self.plot_stats_button.config(state=tk.DISABLED)
             self.last_run_history = None
             
-            # --- 1. Zbierz wartości ---
             func_name = self.widgets['benchmark'].get()
             benchmark_func_class = self.benchmark_functions[func_name]
             epochs = int(self.widgets['epochs'].get())
@@ -240,7 +222,6 @@ class GeneticAlgorithmGUI(tk.Tk):
             mutation = self.widgets['mutation_method'].get()
             optimization = self.widgets['optimization'].get()
 
-            # --- 2. Zbuduj config ---
             config = {
                 'population_size': pop_size, 'n_variables': n_vars,
                 'bounds': bounds, 'precision': precision, 'p_mutation': p_mut,
@@ -249,7 +230,6 @@ class GeneticAlgorithmGUI(tk.Tk):
                 'optimization': optimization
             }
 
-            # --- 3. Uruchom algorytm ---
             self.status_label.config(
                 text=f"Running GA with {func_name} for {epochs} epochs..."
             )
@@ -263,15 +243,12 @@ class GeneticAlgorithmGUI(tk.Tk):
 
             ga = GeneticAlgorithm(config, benchmark_func_class())
 
-            # !--- KLUCZOWA ZMIANA ---!
-            # Oczekujemy, że ga.run() zwróci (winner, history)
             winner, history = ga.run(epochs=epochs)
             
-            self.last_run_history = history # Zapisz historię
+            self.last_run_history = history
             
             print("--- GA Run Finished ---")
             
-            # --- 4. Zapisz do bazy danych ---
             db_file = self.save_results_to_db(config, epochs, func_name, history)
 
             self.status_label.config(
@@ -279,7 +256,6 @@ class GeneticAlgorithmGUI(tk.Tk):
                      f"Fitness: {winner.fitness:.4f}\nResults saved to {db_file}"
             )
             
-            # Włącz przyciski po zakończeniu
             self.plot_fitness_button.config(state=tk.NORMAL)
             self.plot_stats_button.config(state=tk.NORMAL)
 
@@ -289,13 +265,13 @@ class GeneticAlgorithmGUI(tk.Tk):
         except TypeError as e:
              if "'NoneType' is not iterable" in str(e):
                 messagebox.showerror(
-                    "Błąd implementacji GA", 
-                    "Prawdopodobnie metoda `ga.run()` nie zwróciła historii.\n\n"
-                    "Oczekiwano: `winner, history = ga.run(...)`\n"
-                    f"Otrzymano błąd: {e}\n\n"
-                    "Proszę zaktualizować `genetic_algorithm.py`."
+                    "GA Implementation Error", 
+                    "The `ga.run()` method probably did not return a history.\n\n"
+                    "Expected: `winner, history = ga.run(...)`\n"
+                    f"Received error: {e}\n\n"
+                    "Please update `genetic_algorithm.py`."
                 )
-                self.status_label.config(text="Error: `ga.run()` nie zwróciło historii.")
+                self.status_label.config(text="Error: `ga.run()` did not return history.")
              else:
                 messagebox.showerror("Error", f"An unexpected error occurred:\n{e}")
                 self.status_label.config(text=f"Error: {e}")
@@ -304,11 +280,10 @@ class GeneticAlgorithmGUI(tk.Tk):
             self.status_label.config(text=f"Error: {e}")
         
         finally:
-            # Zawsze włącz z powrotem przycisk uruchomienia
             self.run_button.config(state=tk.NORMAL)
 
     def save_results_to_db(self, config, epochs, func_name, history):
-        """Zapisuje wyniki przebiegu do bazy danych SQLite."""
+        """Saves the run results to an SQLite database."""
         db_file = self.widgets['db_file'].get()
         if not db_file:
             db_file = "ga_results.db"
@@ -316,7 +291,6 @@ class GeneticAlgorithmGUI(tk.Tk):
         conn = sqlite3.connect(db_file)
         cursor = conn.cursor()
 
-        # --- 1. Utwórz tabele (jeśli nie istnieją) ---
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS runs (
             run_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -339,9 +313,7 @@ class GeneticAlgorithmGUI(tk.Tk):
         )
         """)
 
-        # --- 2. Wstaw dane przebiegu (run) ---
         run_time = datetime.datetime.now().isoformat()
-        # Konwertuj bounds na listę, bo json nie lubi krotek
         config_to_save = config.copy()
         config_to_save['bounds'] = list(config_to_save['bounds'])
         config_str = json.dumps(config_to_save, indent=2)
@@ -350,12 +322,10 @@ class GeneticAlgorithmGUI(tk.Tk):
             "INSERT INTO runs (timestamp, benchmark_function, epochs, config_json) VALUES (?, ?, ?, ?)",
             (run_time, func_name, epochs, config_str)
         )
-        run_id = cursor.lastrowid # Pobierz ID tego przebiegu
+        run_id = cursor.lastrowid
 
-        # --- 3. Wstaw dane wyników (results) ---
-        # Sprawdź, czy historia ma oczekiwany format
         if not history or not isinstance(history, list) or not isinstance(history[0], dict):
-             raise TypeError("Format 'history' jest niepoprawny. Oczekiwano listy słowników.")
+             raise TypeError("History format is incorrect. Expected a list of dictionaries.")
 
         results_data = [
             (run_id, h['epoch'], h['best_fitness'], h['average_fitness'], h['std_fitness'])
@@ -374,31 +344,31 @@ class GeneticAlgorithmGUI(tk.Tk):
         return db_file
 
     def plot_best_fitness(self):
-        """Generuje wykres najlepszej wartości funkcji w kolejnych epokach."""
+        """Generates a plot of the best fitness value over epochs."""
         if not self.last_run_history:
-            messagebox.showinfo("Brak danych", "Najpierw uruchom algorytm.")
+            messagebox.showinfo("No Data", "Run the algorithm first.")
             return
 
         try:
             epochs = [h['epoch'] for h in self.last_run_history]
             best_fitness = [h['best_fitness'] for h in self.last_run_history]
             
-            plt.figure(figsize=(10, 6)) # Nowe okno wykresu
+            plt.figure(figsize=(10, 6))
             plt.plot(epochs, best_fitness, marker='.', linestyle='-')
-            plt.title("Wartość najlepszej funkcji (Best Fitness) vs. Epoka")
-            plt.xlabel("Epoka")
-            plt.ylabel("Wartość funkcji")
+            plt.title("Best Fitness Value vs. Epoch")
+            plt.xlabel("Epoch")
+            plt.ylabel("Fitness Value")
             plt.grid(True, linestyle='--', alpha=0.6)
             plt.tight_layout()
-            plt.show() # Otwiera interaktywne okno Matplotlib
+            plt.show()
 
         except Exception as e:
-            messagebox.showerror("Błąd wykresu", f"Nie można wygenerować wykresu: {e}")
+            messagebox.showerror("Plot Error", f"Could not generate plot: {e}")
 
     def plot_avg_std_dev(self):
-        """Generuje wykres średniej wartości i odchylenia standardowego."""
+        """Generates a plot of the average value and standard deviation."""
         if not self.last_run_history:
-            messagebox.showinfo("Brak danych", "Najpierw uruchom algorytm.")
+            messagebox.showinfo("No Data", "Run the algorithm first.")
             return
             
         try:
@@ -409,29 +379,27 @@ class GeneticAlgorithmGUI(tk.Tk):
             avg_plus_std = [a + s for a, s in zip(avg_fitness, std_dev)]
             avg_minus_std = [a - s for a, s in zip(avg_fitness, std_dev)]
             
-            plt.figure(figsize=(10, 6)) # Nowe okno wykresu
+            plt.figure(figsize=(10, 6))
             
-            # Linia średniej
-            plt.plot(epochs, avg_fitness, marker='.', linestyle='-', label='Średnia wartość funkcji')
+            plt.plot(epochs, avg_fitness, marker='.', linestyle='-', label='Average Fitness Value')
             
-            # Wypełnienie dla odchylenia standardowego
             plt.fill_between(
                 epochs, avg_minus_std, avg_plus_std, 
-                color='blue', alpha=0.2, label='Odchylenie standardowe (±1 std)'
+                color='blue', alpha=0.2, label='Standard Deviation (±1 std)'
             )
             
-            plt.title("Średnia Wartość Funkcji i Odchylenie Standardowe vs. Epoka")
-            plt.xlabel("Epoka")
-            plt.ylabel("Wartość funkcji")
+            plt.title("Average Fitness and Standard Deviation vs. Epoch")
+            plt.xlabel("Epoch")
+            plt.ylabel("Fitness Value")
             plt.legend()
             plt.grid(True, linestyle='--', alpha=0.6)
             plt.tight_layout()
-            plt.show() # Otwiera interaktywne okno Matplotlib
-
+            plt.show()
         except Exception as e:
-            messagebox.showerror("Błąd wykresu", f"Nie można wygenerować wykresu: {e}")
+            messagebox.showerror("Plot Error", f"Could not generate plot: {e}")
 
 
 if __name__ == "__main__":
     app = GeneticAlgorithmGUI()
     app.mainloop()
+    

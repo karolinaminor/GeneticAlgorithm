@@ -35,7 +35,7 @@ class GeneticAlgorithm:
         return population
 
     def run(self, epochs: int) -> tuple:
-        """Run the genetic algorithm - test """
+        """Run the genetic algorithm"""
 
         self.initialize_population()
 
@@ -77,9 +77,9 @@ class GeneticAlgorithm:
 
             self.population = new_population
 
-            print("Populacja po krzyżowaniu, mutacji i inwersji:")
+            print("Population after mutation, crossover and inversion:")
             for i, c in enumerate(self.population):
-                print(f"  Chromosom {i + 1}: {c.genes}, Fitness: {c.fitness}")
+                print(f"  Chromosome {i + 1}: {c.genes}, Fitness: {c.fitness}")
                 print(f"Values: {c.decode()}")
             
             best_solution = self._get_best_solution()
@@ -94,15 +94,15 @@ class GeneticAlgorithm:
                 'std_fitness': stats['std_fitness']
             })
 
-            print(f"\nNajlepsze rozwiązanie w epoce {epoch + 1}:")
-            print(f"  Chromosom: {best_solution.genes}, Fitness: {best_solution.fitness}")
+            print(f"\nBest solution in epoch {epoch + 1}:")
+            print(f"  Chromosome: {best_solution.genes}, Fitness: {best_solution.fitness}")
             print(f"  Values: {best_solution.decode()}")
 
-        print("\n=== NAJLEPSZE ROZWIĄZANIE PO WSZYSTKICH EPOKACH ===")
-        print(f"  Chromosom: {best_solution.genes}, Fitness: {best_solution.fitness}")
+        print("\n=== BEST SOLUTION AFTER ALL EPOCHS ===")
+        print(f"  Chromosome: {best_solution.genes}, Fitness: {best_solution.fitness}")
         print(f"  Values: {best_solution.decode()}")
 
-        print("\n=== KONIEC DZIAŁANIA ALGORYTMU ===")
+        print("\n=== END OF ALGORITHM RUN ===")
         return best_solution, history
 
     def _calculate_gene_length(self, bound, precision):
