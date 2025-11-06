@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 from tkinter import messagebox
 
+
 def plot_best_fitness(history):
     """Generates a plot of the best fitness value over epochs."""
     if not history:
@@ -20,6 +21,7 @@ def plot_best_fitness(history):
         plt.show()
     except Exception as e:
         messagebox.showerror("Plot Error", f"Could not generate plot: {e}")
+
 
 def plot_avg_std_dev(history):
     """Generates a plot of the average value and standard deviation."""

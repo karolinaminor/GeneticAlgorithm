@@ -11,8 +11,7 @@ class SelectionMethods:
             population, key=lambda x: x.fitness, reverse=not minimize)
         return sorted_pop[:num_select]
 
-    # in this implementation, individuals can be selected multiple times - decide if this is desired
-    # other possible way is to draw without replacement, but then difficulut to to resolve both parameters: num_select and tournament_size
+
     @staticmethod
     def tournament_selection(population: list, tournament_size: int, num_select: int, minimize: bool) -> list:
         """Select individuals using tournament selection."""

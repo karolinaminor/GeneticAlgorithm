@@ -1,12 +1,17 @@
+import pkgutil
+if not hasattr(pkgutil, "ImpImporter"):
+    import zipimport
+    pkgutil.ImpImporter = zipimport.zipimporter
+
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 import benchmark_functions as bf
 
+from functions import F62014_fun
 from app_controller import AppController
 import plotter 
 
-from genetic_algorithm import GeneticAlgorithm
 
 class GeneticAlgorithmGUI(tk.Tk):
     def __init__(self):
@@ -17,7 +22,10 @@ class GeneticAlgorithmGUI(tk.Tk):
         self.last_run_history = None 
         self.widgets = {}
 
-        self.benchmark_functions = {"McCormick": bf.McCormick}
+        self.benchmark_functions = {
+            "McCormick": bf.McCormick,
+            "Shifted and Rotated Weierstrass Function": F62014_fun
+        }
         
         self.controller = AppController(self, self.benchmark_functions)
 
@@ -43,8 +51,9 @@ class GeneticAlgorithmGUI(tk.Tk):
         self.widgets['p_mutation'] = self._create_entry(param_frame, "P(mutation):", 0.09, param_row); param_row += 1
         self.widgets['p_inversion'] = self._create_entry(param_frame, "P(inversion):", 0.09, param_row); param_row += 1
         self.widgets['elite_p'] = self._create_entry(param_frame, "Elite Percentage:", 0.15, param_row); param_row += 1
-        self.widgets['crossover_method'] = self._create_combo(param_frame, "Crossover Method:", ['one_point', 'two_point', 'uniform'], 'two_point', param_row); param_row += 1
-        self.widgets['mutation_method'] = self._create_combo(param_frame, "Mutation Method:", ['one_point', 'multiple_point'], 'one_point', param_row); param_row += 1
+        self.widgets['selection_method'] = self._create_combo(param_frame, "Selection Method:", ['best', 'tournament', 'roulette_wheel'], 'best', param_row); param_row += 1
+        self.widgets['crossover_method'] = self._create_combo(param_frame, "Crossover Method:", ['one_point', 'two_point', 'uniform', 'discrete'], 'two_point', param_row); param_row += 1
+        self.widgets['mutation_method'] = self._create_combo(param_frame, "Mutation Method:", ['one_point', 'two_point', 'boundary'], 'one_point', param_row); param_row += 1
         self.widgets['optimization'] = self._create_combo(param_frame, "Optimization:", ['min', 'max'], 'min', param_row); param_row += 1
         self.widgets['db_file'] = self._create_entry(param_frame, "Database File:", "ga_results.db", param_row); param_row += 1
         
@@ -83,7 +92,6 @@ class GeneticAlgorithmGUI(tk.Tk):
         combo.grid(row=row, column=1, sticky="ew", padx=5, pady=3)
         return combo
 
-    
     def run_ga_clicked(self):
         """Called when the 'Run' button is clicked."""
         self.run_button.config(state=tk.DISABLED)
@@ -103,12 +111,13 @@ class GeneticAlgorithmGUI(tk.Tk):
                 'elite_p': float(self.widgets['elite_p'].get()),
                 'min_b': float(self.widgets['bound_min'].get()),
                 'max_b': float(self.widgets['bound_max'].get()),
+                'selection': self.widgets['selection_method'].get(),
                 'crossover': self.widgets['crossover_method'].get(),
                 'mutation': self.widgets['mutation_method'].get(),
                 'optimization': self.widgets['optimization'].get(),
                 'db_file': self.widgets['db_file'].get() or "ga_results.db"
             }
-            
+
             self.controller.run_ga_task(gui_data)
 
         except ValueError as e:

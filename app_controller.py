@@ -1,7 +1,9 @@
 # app_controller.py
+import time
 from tkinter import messagebox
 from genetic_algorithm import GeneticAlgorithm
 from database_manager import DatabaseManager
+
 
 class AppController:
     def __init__(self, view, benchmark_functions):
@@ -38,16 +40,25 @@ class AppController:
             print(f"Epochs: {gui_data['epochs']}")
             print("=" * 30)
 
+            start_time = time.time()
+
             ga = GeneticAlgorithm(config, benchmark_func_class())
             winner, history = ga.run(epochs=gui_data['epochs'])
-            
+
+            end_time = time.time()
+            elapsed_time = end_time - start_time
+            print(f"Execution time: {elapsed_time:.3f} s")
+
             print("--- GA Run Finished ---")
-            
+
             self.db_manager.save_run_results(config, gui_data['epochs'], func_name, history)
 
             status_text = (
-                f"Run finished!\nBest solution: {winner.decode()}\n"
-                f"Fitness: {winner.fitness:.4f}\nResults saved to {gui_data['db_file']}"
+                f"Run finished!\n"
+                f"Best solution: {winner.decode()}\n"
+                f"Fitness: {winner.fitness:.4f}\n"
+                f"Execution time: {elapsed_time:.3f} s\n"
+                f"Results saved to {gui_data['db_file']}"
             )
             self.view.on_run_complete(status_text, history)
 

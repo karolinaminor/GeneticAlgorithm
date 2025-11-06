@@ -4,6 +4,7 @@ from chromosome import Chromosome
 from crossover_methods import CrossoverMethods
 from mutation_methods import MutationMethods
 from inversion_methods import InversionMethods
+from selection_methods import SelectionMethods
 
 
 class GeneticAlgorithm:
@@ -54,20 +55,17 @@ class GeneticAlgorithm:
             elite = self._get_elite(self.population)
             new_population.extend(elite)
 
+            parents = self._selection()
+
             while len(new_population) < len(self.population):
-                parent1 = random.choice(self.population)
-                parent2 = random.choice(self.population)
-                while parent1 == parent2:
-                    parent2 = random.choice(self.population)
+                parent1, parent2 = random.sample(parents, 2)
 
                 child1, child2 = self._crossover(parent1, parent2)
 
                 child1 = self._mutation(child1)
                 child1 = self._inversion(child1)
                 child1.evaluate_fitness(self.fitness_function)
-
-                if len(new_population) < len(self.population):
-                    new_population.append(child1)
+                new_population.append(child1)
 
                 if len(new_population) < len(self.population):
                     child2 = self._mutation(child2)
@@ -165,6 +163,27 @@ class GeneticAlgorithm:
 
         if config['optimization'] not in ('min', 'max'):
             raise ValueError("'optimization' must be either 'min' or 'max'")
+
+    def _selection(self) -> list:
+        """Select parents from the current population using the configured selection method."""
+        selection_method = self.config.get('selection_method', 'tournament')
+        minimize = self.config.get('optimization', 'min') == 'min'
+        num_select = self.config['population_size']
+
+        if selection_method == 'tournament':
+            tournament_size = self.config.get('tournament_size', 3)
+            parents = SelectionMethods.tournament_selection(
+                self.population, tournament_size, num_select, minimize)
+        elif selection_method == 'roulette':
+            parents = SelectionMethods.roulette_wheel_selection(
+                self.population, num_select, minimize)
+        elif selection_method == 'best':
+            parents = SelectionMethods.best_selection(
+                self.population, num_select, minimize)
+        else:
+            raise ValueError(f"Unknown selection method: {selection_method}")
+
+        return parents
 
     def _crossover(self, parent1: Chromosome, parent2: Chromosome):
         """Perform crossover between two parent chromosomes."""
